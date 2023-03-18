@@ -70,3 +70,9 @@ jobs:
           export JDK_VERSION=${{ matrix.java }} 
           export USER=github
           /bin/bash ./dev-tools/gitact/gitact-script.sh `pwd` ${{ matrix.module }};
+      - name: Build and analyze
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=MicheleTosi_storm2
+
