@@ -285,6 +285,11 @@
         <license.skipAggregateDownloadLicenses>true</license.skipAggregateDownloadLicenses>
         <license.thirdPartyFilename>DEPENDENCY-LICENSES</license.thirdPartyFilename>
         <license.outputDirectory>${project.basedir}</license.outputDirectory>
+        
+        <!--Isw project-->
+	<sonar.organization>mike-98</sonar.organization>
+	<sonar.host.url>https://sonarcloud.io</sonar.host.url>
+
 
         <!-- dependency versions -->
         <clojure.version>1.10.0</clojure.version>
