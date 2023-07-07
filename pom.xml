@@ -287,8 +287,9 @@
         <license.outputDirectory>${project.basedir}</license.outputDirectory>
         
         <!--Isw project-->
-	<sonar.organization>mike-98</sonar.organization>
-	<sonar.host.url>https://sonarcloud.io</sonar.host.url>
+        <sonar.organization>mike-98</sonar.organization>
+        <sonar.host.url>https://sonarcloud.io</sonar.host.url>
+        <sonar.coverage.jacoco.xmlReportPaths>../test-jacoco/target/site/jacoco-aggregate/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
 
 
         <!-- dependency versions -->
@@ -348,6 +349,8 @@
         
         <storm.kafka.client.version>0.11.0.3</storm.kafka.client.version>
 
+        <jacoco-maven-plugin.version>0.8.8</jacoco-maven-plugin.version>
+
         <!-- Java and clojure build lifecycle test properties are defined here to avoid having to create a default profile -->
         <java.unit.test.exclude.groups>PerformanceTest</java.unit.test.exclude.groups>
         <!-- by default the clojure test set are all clojure tests that are not integration tests. This property is overridden in the profiles -->
@@ -387,6 +390,9 @@
         <module>storm-clojure</module>
         <module>storm-clojure-test</module>
         <module>storm-submit-tools</module>
+
+        <!--isw2 module-->
+        <module>test-jacoco</module>
     </modules>
 
     <dependencies>
@@ -394,6 +400,11 @@
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.vintage</groupId>
+            <artifactId>junit-vintage-engine</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -703,6 +714,30 @@
                 <module>examples/storm-rocketmq-examples</module>
                 <module>examples/storm-perf</module>
             </modules>
+        </profile>
+
+        <!-- isw2 project -->
+        <profile>
+            <id>jacoco-coverage</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.jacoco</groupId>
+                        <artifactId>jacoco-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>prepare-agent</id>
+                                <goals>
+                                    <goal>prepare-agent</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
         </profile>
     </profiles>
 
@@ -1188,7 +1223,7 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>${surefire.version}</version>
-                    <configuration>
+                    <!--configuration>
                         <redirectTestOutputToFile>true</redirectTestOutputToFile>
                         <excludedGroups>IntegrationTest | ${java.unit.test.exclude.groups}</excludedGroups>
                         <argLine>-Xmx3g -XX:+HeapDumpOnOutOfMemoryError</argLine>
@@ -1198,20 +1233,20 @@
                         <systemPropertyVariables>
                             <storm.home>${project.basedir}/target/testhome</storm.home>
                         </systemPropertyVariables>
-                    </configuration>
+                    </configuration-->
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-failsafe-plugin</artifactId>
                     <version>${surefire.version}</version>
-                    <configuration>
+                    <!--configuration>
                         <redirectTestOutputToFile>true</redirectTestOutputToFile>
                         <includes>
                             <include>**/*.java</include>
                         </includes>
                         <groups>IntegrationTest</groups>
                         <argLine>-Xmx1536m</argLine>
-                    </configuration>
+                    </configuration-->
                     <executions>
                         <execution>
                             <goals>

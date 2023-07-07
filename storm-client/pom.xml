@@ -322,5 +322,129 @@
                 </plugins>
             </build>
         </profile>
+
+        <!--Ba-dua coverage-->
+        <profile>
+            <id>ba-dua-coverage</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <properties>
+                <BADUACLI>./target/lib/ba-dua-cli-0.6.0-all.jar</BADUACLI>
+                <BADUASER>./target/badua.ser</BADUASER>
+                <CLASSES>./target/classes</CLASSES>
+                <BADUAXML>./target/badua.xml</BADUAXML>
+                <argLine>
+                    -javaagent:${project.build.directory}/lib/ba-dua-agent-rt-0.6.0-all.jar
+                    -Doutput.file=target/badua.ser
+                </argLine>
+            </properties>
+            <build>
+                <plugins>
+                    <!-- Plugin per l'unpacking delle dipendenze -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-dependency-plugin</artifactId>
+                        <version>2.10</version>
+                        <executions>
+                            <execution>
+                                <id>extract-zip</id>
+                                <phase>compile</phase>
+                                <goals>
+                                    <goal>unpack</goal>
+                                </goals>
+                                <configuration>
+                                    <artifactItems>
+                                        <artifactItem>
+                                            <groupId>br.usp.each.saeg</groupId>
+                                            <artifactId>ba-dua</artifactId>
+                                            <version>0.6.0</version>
+                                            <type>zip</type>
+                                            <outputDirectory>${project.build.directory}</outputDirectory>
+                                        </artifactItem>
+                                    </artifactItems>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <version>1.5.0</version>
+                        <executions>
+                            <execution>
+                                <id>run-baduacli</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <executable>java</executable>
+                                    <arguments>
+                                        <argument>-jar</argument>
+                                        <argument>${BADUACLI}</argument>
+                                        <argument>report</argument>
+                                        <argument>-input</argument>
+                                        <argument>${BADUASER}</argument>
+                                        <argument>-classes</argument>
+                                        <argument>${CLASSES}</argument>
+                                        <argument>-show-classes</argument>
+                                        <argument>-show-methods</argument>
+                                        <argument>-xml</argument>
+                                        <argument>${BADUAXML}</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>mutation-testing</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <properties>
+                <!-- For incremental analysis this should be commented out -->
+                <!-- <withHistory>true</withHistory> -->
+                <pitest.version>1.8.0</pitest.version>
+                <pitest.history.file>${project.build.directory}/pitest.history</pitest.history.file>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.pitest</groupId>
+                        <artifactId>pitest-maven</artifactId>
+                        <version>${pitest.version}</version>
+                        <configuration>
+                            <targetClasses>
+                                <param>org.apache.storm.topology.TopologyBuilder</param>
+                                <param>org.apache.storm.bolt.JoinBolt</param>
+                            </targetClasses>
+                            <targetTests>
+                                <param>org.apache.storm.topology.TopologyBuilderTests</param>
+                                <param>org.apache.storm.bolt.JoinBoltTests</param>
+                            </targetTests>
+                            <avoidCallsTo>
+                                <avoidCallsTo>org.slf4j</avoidCallsTo>
+                            </avoidCallsTo>
+                            <historyInputFile>${pitest.history.file}</historyInputFile>
+                            <historyOutputFile>${pitest.history.file}</historyOutputFile>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>Generate PIT report</id>
+                                <phase>test-compile</phase>
+                                <goals>
+                                    <goal>mutationCoverage</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
     </profiles>
 </project>
