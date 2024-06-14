@@ -120,8 +120,11 @@ public class JoinBoltTests {
             return Arrays.asList(new Object[][]{
                     {null, true},
                     {"", false},
-                    {"studentId,name,surname,university", false},
+                    {"students:studentId,name,surname,university", false},
                     {"city", false},
+                    {"studentId;name;surname;university", false},
+                    {"outer.studentId,outer.name,outer.surname,outer.university", false},
+
             });
         }
 
@@ -143,34 +146,13 @@ public class JoinBoltTests {
                 assertTrue(this.expException);
             }
         }
-    }
-
-    @RunWith(Parameterized.class)
-    public static class  NestedKeysSelectTest{
-        private final boolean expException;
-        private final String commaSeparatedKeys;
-
-        public NestedKeysSelectTest(String commaSeparatedKeys, boolean expException){
-            this.commaSeparatedKeys=commaSeparatedKeys;
-            this.expException=expException;
-        }
-
-        @Parameterized.Parameters
-        public static Collection<Object[]> testCasesArgument() {
-            return Arrays.asList(new Object[][]{
-                    {null, true},
-                    {"", false},
-                    {"outer.university,outer.city", false},
-                    {"university,city", false},
-            });
-        }
 
         @Test
         public void testNestedKeys() {
             try {
-                ArrayList<Tuple> universityStream = makeNestedEventsStream("university", universityFields, universities, "universitySpout");
+                ArrayList<Tuple> universityStream = makeNestedEventsStream("students", studentFields, students, "studentsSpout");
                 TupleWindow window = makeTupleWindow(universityStream);
-                JoinBolt bolt = new JoinBolt(JoinBolt.Selector.STREAM, "university", "outer.universityId")
+                JoinBolt bolt = new JoinBolt(JoinBolt.Selector.STREAM, "students", "outer.studentId")
                         .select(this.commaSeparatedKeys);
                 MockCollector collector = new MockCollector();
                 bolt.prepare(null, null, collector);
@@ -314,7 +296,7 @@ public class JoinBoltTests {
                 bolt.execute(window);
                 printResults(collector);
 
-//                assertEquals(this.expSizeJoin, collector.actualResults.size()); //PIT
+                assertEquals(this.expSizeJoin, collector.actualResults.size()); //PIT
                 for (List<Object> tuple : collector.actualResults) {
                     assertEquals(3, tuple.size());
                     for (Object o : tuple) {
@@ -344,7 +326,7 @@ public class JoinBoltTests {
                 bolt.execute(window);
                 printResults(collector);
 
-//                assertEquals(this.expSizeLeftJoin, collector.actualResults.size()); //PIT
+                assertEquals(this.expSizeLeftJoin, collector.actualResults.size()); //PIT
                 for (List<Object> tuple : collector.actualResults) {
                     assertEquals(3, tuple.size());
                     for (Object o : tuple) {
@@ -359,6 +341,91 @@ public class JoinBoltTests {
         }
 
     }
+
+    @RunWith(Parameterized.class)
+    public static class  Projection2Test {
+
+        private final String newStream;
+        private final String priorStream;
+        private final String field;
+
+        public Projection2Test(String newStream, String field, String priorStream) {
+            this.newStream = newStream;
+            this.field = field;
+            this.priorStream = priorStream;
+        }
+        @Parameterized.Parameters
+        public static Collection<Object[]> testCasesArgument () {
+            return Arrays.asList(new Object[][]{
+                    {"student", studentFields[0],"student"},//aggiunto per aumentare la coverage di jacoco
+            });
+        }
+
+        @Test
+        public void joinTest () {
+            try {
+                ArrayList<Tuple> studentStream = makeStream("student", studentFields, students, "studentSpout");
+                TupleWindow window = makeTupleWindow(studentStream);
+
+                JoinBolt bolt=new JoinBolt(JoinBolt.Selector.STREAM, "student", studentFields[3])
+                        .join(this.newStream, this.field, this.priorStream)
+                        .join(this.newStream, this.field, this.priorStream)
+                        .select("nome,cognome");
+
+                MockCollector collector = new MockCollector();
+                bolt.prepare(null, null, collector);
+                bolt.execute(window);
+                printResults(collector);
+
+            } catch (IllegalArgumentException e) {
+                e.printStackTrace();
+                assert (true);
+            }
+        }
+
+    }
+
+    @RunWith(Parameterized.class)
+    public static class  JoinTypeTest {
+
+        private final String newStream;
+        private final String priorStream;
+        private final String field;
+
+        public JoinTypeTest(String newStream, String field, String priorStream) {
+            this.newStream = newStream;
+            this.field = field;
+            this.priorStream = priorStream;
+        }
+        @Parameterized.Parameters
+        public static Collection<Object[]> testCasesArgument () {
+            return Arrays.asList(new Object[][]{
+                    {"university", studentFields[3],"student"},//aggiunto per aumentare la coverage di badua
+            });
+        }
+
+        @Test
+        public void joinTest () {
+            try {
+                ArrayList<Tuple> studentStream = makeStream(null, studentFields, students, "studentSpout");
+                ArrayList<Tuple> universityStream = makeStream("university", universityFields, universities, "universitySpout");
+                TupleWindow window = makeTupleWindow(studentStream, universityStream);
+
+                JoinBolt bolt=new JoinBolt(JoinBolt.Selector.STREAM, "student", studentFields[3])
+                        .join(this.newStream, this.field, this.priorStream);
+
+                MockCollector collector = new MockCollector();
+                bolt.prepare(null, null, collector);
+                bolt.execute(window);
+                printResults(collector);
+                fail();
+            } catch (IllegalArgumentException e) {
+                assert (true);
+            }
+        }
+
+    }
+
 
     static class MockCollector extends OutputCollector {
         public ArrayList<List<Object>> actualResults = new ArrayList<>();

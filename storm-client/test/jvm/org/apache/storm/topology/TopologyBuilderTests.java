@@ -1,9 +1,11 @@
 package org.apache.storm.topology;
 
 import org.apache.storm.generated.GlobalStreamId;
+import org.apache.storm.generated.SharedMemory;
 import org.apache.storm.generated.StormTopology;
 import org.apache.storm.lambda.SerializableSupplier;
 import org.apache.storm.shade.com.google.common.collect.ImmutableSet;
+import org.apache.storm.shade.org.apache.commons.collections.set.CompositeSet;
 import org.apache.storm.state.State;
 import org.junit.Before;
 import org.junit.Test;
@@ -48,9 +50,8 @@ public class TopologyBuilderTests {
         @Parameterized.Parameters
         public static Collection<Object[]> testCasesArgument(){
             return Arrays.asList(new Object[][]{
-                    //SPOUT         BOLT            STATEFUL_BOLT    WORKER_HOOK       EMPTY     EXPEXCEPTION   NULLEXCEPTION
                     {RICH_SPOUT,    BASIC_BOLT,     STATEFUL_BOLT, WORKER_HOOK,    false,    false, false},
-//                    {RICH_SPOUT,    BASIC_BOLT,     NO_STATEFUL_BOLT, WORKER_HOOK,    false,    false, false},//addForPit
+                    {RICH_SPOUT,    BASIC_BOLT,     NO_STATEFUL_BOLT, WORKER_HOOK,    false,    false, false},
                     {UNSERIALIZABLE_RICH_SPOUT,    RICH_BOLT,     UNSERIALIZABLE_STATEFUL_BOLT,  UNSERIALIZABLE_WORKER_HOOK,   false,    true, false},
                     {NULL_SPOUT,    UNSERIALIZABLE_BASIC_BOLT,     NO_STATEFUL_BOLT,  NULL_WORKER_HOOK,   false,    true, true},
                     {RICH_SPOUT,    UNSERIALIZABLE_RICH_BOLT,     NULL_BOLT, WORKER_HOOK,     false,    true, true},
@@ -200,16 +201,13 @@ public class TopologyBuilderTests {
                                 stormTopology.get_bolts().get(bolts[2]).get_common().get_inputs().keySet());
                     }
 
-//                    assertEquals(0, stormTopology.get_bolts().get(bolts[0]).get_common().get_parallelism_hint());       //PIT
-//                    assertEquals(2, stormTopology.get_bolts().get(bolts[1]).get_common().get_parallelism_hint());       //PIT
-//                    assertEquals(3, stormTopology.get_bolts().get(bolts[2]).get_common().get_parallelism_hint());       //PIT
+                    assertEquals(0, stormTopology.get_bolts().get(bolts[0]).get_common().get_parallelism_hint());       //PIT
+                    assertEquals(2, stormTopology.get_bolts().get(bolts[1]).get_common().get_parallelism_hint());       //PIT
+                    assertEquals(3, stormTopology.get_bolts().get(bolts[2]).get_common().get_parallelism_hint());       //PIT
                     assertTrue(stormTopology.is_set_worker_hooks());
                     assertEquals(1,stormTopology.get_worker_hooks_size());
-//                    assertFalse(stormTopology.is_set_shared_memory()); //PIT
 
                 }
-//                assertFalse(this.expException); //PIT
-//                assertFalse(this.nullException); //PIT
             } catch (NullPointerException e) {
                 assertTrue(this.nullException);
             } catch (Exception e) {
@@ -239,7 +237,6 @@ public class TopologyBuilderTests {
         @Parameterized.Parameters
         public static Collection<Object[]> testCasesArgument() {
             return Arrays.asList(new Object[][]{
-                    //ID         SERIALIZABLE      PARALLELISM         NULLEXCEPTION       EXPEXCEPTION
                     {"component", true, 1, false, true},
                     {"component1", true, 1, false, false},
                     {"", false, -1, false, true},
@@ -265,8 +262,6 @@ public class TopologyBuilderTests {
                     boltDeclarer = topologyBuilder.setBolt(this.id, util.makeUnserializableBasicBolt(), this.parallelismHint);
                 }
                 assertNotNull(boltDeclarer);
-//                assertFalse(this.expException); //PIT
-//                assertFalse(this.nullException); //PIT
             } catch (NullPointerException e) {
                 assertTrue(this.nullException);
             } catch (Exception e) {
@@ -286,8 +281,6 @@ public class TopologyBuilderTests {
                     boltDeclarer = topologyBuilder.setBolt(this.id, util.makeUnserializableRichBolt(), this.parallelismHint);
                 }
                 assertNotNull(boltDeclarer);
-//                assertFalse(this.expException); //PIT
-//                assertFalse(this.nullException); //PIT
             } catch (NullPointerException e) {
                 assertTrue(this.nullException);
             } catch (Exception e) {
@@ -307,8 +300,6 @@ public class TopologyBuilderTests {
                     boltDeclarer = topologyBuilder.setBolt(this.id, util.makeUnserializableStatefulBolt(), this.parallelismHint);
                 }
                 assertNotNull(boltDeclarer);
-//                assertFalse(this.expException); //PIT
-//                assertFalse(this.nullException); //PIT
             } catch (NullPointerException e) {
                 assertTrue(this.nullException);
             } catch (Exception e) {
@@ -328,8 +319,6 @@ public class TopologyBuilderTests {
                     boltDeclarer = topologyBuilder.setBolt(this.id, util.makeUnserializableStatefulWindowedBolt(), this.parallelismHint);
                 }
                 assertNotNull(boltDeclarer);
-//                assertFalse(this.expException); //PIT
-//                assertFalse(this.nullException); //PIT
             } catch (NullPointerException e) {
                 assertTrue(this.nullException);
             } catch (Exception e) {
@@ -349,8 +338,6 @@ public class TopologyBuilderTests {
                     boltDeclarer = topologyBuilder.setBolt(this.id, util.makeUnserializableWindowedBolt(), this.parallelismHint);
                 }
                 assertNotNull(boltDeclarer);
-//                assertFalse(this.expException); //PIT
-//                assertFalse(this.nullException); //PIT
             } catch (NullPointerException e) {
                 assertTrue(this.nullException);
             } catch (Exception e) {
@@ -380,7 +367,6 @@ public class TopologyBuilderTests {
         @Parameterized.Parameters
         public static Collection<Object[]> testCasesArgument() {
             return Arrays.asList(new Object[][]{
-                    //ID         SERIALIZABLE      PARALLELISM         NULLEXCEPTION       EXPEXCEPTION
                     {"component", true, 1, false, true},
                     {"component1", true, 1, false, false},
                     {"", false, -1, false, true},
@@ -406,8 +392,6 @@ public class TopologyBuilderTests {
                     spoutDeclarer=topologyBuilder.setSpout(this.id, util.makeUnserializableRichSpout(), this.parallelismHint);
                 }
                 assertNotNull(spoutDeclarer);
-//                assertFalse(this.expException); //PIT
-//                assertFalse(this.nullException); //PIT
             }catch(NullPointerException e){
                 assertTrue(this.nullException);
             }catch(Exception e){
@@ -427,13 +411,55 @@ public class TopologyBuilderTests {
                     spoutDeclarer=topologyBuilder.setSpout(this.id, util.makeUnserializableSupplier(), this.parallelismHint);
                 }
                 assertNotNull(spoutDeclarer);
-//                assertFalse(this.expException); //PIT
-//                assertFalse(this.nullException); //PIT
             }catch(NullPointerException e){
                 assertTrue(this.nullException);
             }catch(Exception e){
                 assertTrue(this.expException);
             }
+        }
+    }
+
+    @RunWith(Parameterized.class)
+    public static class CreateTopology2Test {
+
+        public CreateTopology2Test(){
+
+        }
+
+        @Parameterized.Parameters
+        public static Collection<Object[]> testCasesArgument(){
+            return Arrays.asList(new Object[][]{
+                    {},
+            });
+        }
+
+
+
+        @Test
+        public void topologyBuilderTest() {
+
+            String[] bolts = new String[]{"bolt1", "bolt2", "bolt3"};
+            String spout = "spout";
+            Utils utils=new Utils();
+            TopologyBuilder topologyBuilder = new TopologyBuilder();
+
+            topologyBuilder.setSpout(spout, utils.makeRichSpout()).addSharedMemory(new SharedMemory("pippo"));
+
+            topologyBuilder.setBolt(bolts[0], utils.makeBasicBolt()).shuffleGrouping(spout);
+            topologyBuilder.setBolt(bolts[1], utils.makeBasicBolt(), 2).shuffleGrouping(bolts[0]);
+            topologyBuilder.setBolt(bolts[2], utils.makeBasicBolt(), 3).shuffleGrouping(bolts[1]);
+
+            topologyBuilder.setBolt("statefulBolt", utils.makeStatefulBolt()).shuffleGrouping(spout);
+
+            topologyBuilder.addWorkerHook(utils.makeWorkerHook());
+
+
+            StormTopology stormTopology = topologyBuilder.createTopology();
+
+            assertFalse(stormTopology.get_component_to_shared_memory().isEmpty());
+
+            assertTrue(stormTopology.get_component_to_shared_memory().get("spout").contains("pippo"));
+            assertTrue(stormTopology.is_set_shared_memory());
         }
     }
 }
